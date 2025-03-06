@@ -1,7 +1,7 @@
-# languages is an array of tuples in the format
+# LANGUAGES is an array of tuples in the format
 # (name, code)
 
-languages = [
+LANGUAGES = [
 	("Autodetect Language", "auto"),
 	("Asturian", "ast"),
 	("Belarusian", "be"),

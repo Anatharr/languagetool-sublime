@@ -1,10 +1,8 @@
 {
-    "languagetool_server_remote": "https://api.languagetool.org/v2/check",
-    "languagetool_server_local": "http://localhost:8081/v2/check",
-    "default_server": "remote",
-    "display_mode": "panel",
-    "languagetool_jar": "C:\\bin\\LanguageTool-3.5\\languagetool.jar",
-    "highlight-scope": "comment",
+    "server": "https://api.languagetool.org/v2/check",
+    // "server": "http://localhost:8081/v2/check",
+    "debug": false,
+    // "highlight-scope": "comment",
     "ignored-scopes": [
         "support.function.*.latex",
         "meta.*.latex",

@@ -4,16 +4,6 @@
 		"command": "language_tool"
 	},
 	{
-		"caption": "LanguageTool: Check Text (Local Server)",
-		"command": "language_tool",
-		"args": {"force_server": "local"}
-	},
-	{
-		"caption": "LanguageTool: Check Text (Remote Server)",
-		"command": "language_tool",
-		"args": {"force_server": "remote"}
-	},
-	{
 		"caption": "LanguageTool: Next Problem",
 		"command": "goto_next_language_problem",
 		"args": {"jump_forward": true}
@@ -49,8 +39,4 @@
 		"caption": "LanguageTool: Activate Rule",
 		"command": "activate_rule"
 	},
-	{
-		"caption": "LanguageTool: Start Local Server",
-		"command": "start_language_tool_server"
-	}
 ]
