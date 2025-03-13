@@ -52,14 +52,11 @@ class gotoNextLanguageProblemCommand(sublime_plugin.TextCommand):
 class clearLanguageProblemsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         problems = get_problems(self.view)
-        log("clear", problems, self.view.clones())
+        log("Clearing", len(problems), "problems")
         for p in problems:
-            self.view.erase_regions(p['regionKey'])
+            self.view.erase_regions(p['id'])
         problems = []
-        recompute_highlights(self.view)
-        # caretPos = self.view.sel()[0].end()
-        # self.view.sel().clear()
-        # move_caret(self.view, caretPos, caretPos)
+        save_problems(self.view, problems)
 
 
 class markLanguageProblemSolvedCommand(sublime_plugin.TextCommand):
@@ -158,7 +155,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 
         matches = server.getResponse(server_url, check_text, language,
                                        ignored_ids)
-        log("MATCHES", matches)
+        log("Matches", matches)
 
         if matches == None:
             set_status_bar('Could not parse server response')
@@ -168,7 +165,7 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
         get_problem = compose(shifter, parse_match)
 
         problems = [problem for problem in map(get_problem, matches)
-                    if region_contains(check_region, problem) and not is_ignored(self.view, problem)]
+                    if region_contains(check_region, problem) and not is_ignored(self.view, problem['offset'])]
 
         for index, problem in enumerate(problems):
             problem['originalContent'] = self.view.substr(get_region_for_problem(problem))
@@ -226,6 +223,21 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
 #             set_status_bar('activated rule %s' % activate_rule['id'])
 
 
+class LanguageToolTextListener(sublime_plugin.TextChangeListener):
+    def on_text_changed(self, changes):
+        for change in changes:
+            view = sublime.active_window().active_view()
+            problems = get_problems(view)
+            if problems:
+                offset = len(change.str)-change.len_utf8
+                log("TextChange", change, offset)
+
+                # On text change we need to shift all problems situated after the change
+                for problem in problems:
+                    if problem['offset']>=change.a.pt: # Needs shifting
+                        shift_offset(problem, offset)
+
+
 class LanguageToolListener(sublime_plugin.EventListener):
     def on_modified(self, view):
         # buffer text was changed, recompute region highlights
@@ -233,4 +245,72 @@ class LanguageToolListener(sublime_plugin.EventListener):
 
     def on_hover(self, view, point, hover_zone):
         if hover_zone == 1: # sublime.HoverZone.TEXT
-            log("HOVER", view, get_problems(view), point, view.scope_name(point))
+            if not is_ignored(view, point):
+                for problem in get_problems(view):
+                    if get_region_for_problem(problem).contains(point):
+                        log("OnHover", "show_popup", problem)
+
+                        view.show_popup(
+                            generate_html_popup(view, problem),
+                            max_width=512,
+                            max_height=512,
+                            location=point,
+                            on_navigate=self.on_navigate)
+
+    def on_navigate(self, link):
+        log("Navigate", link)
+        # Retrieve view
+        if link.startswith('view:'):
+            try:
+                path = link.split(',')[0].split(':')[1]
+                window_id, view_id = map(int, path.split('/'))
+                link = ','.join(link.split(',')[1:])
+            except ValueError:
+                log("Navigate", "Error: invalid view path", path)
+                return
+
+            window = find_by_id(sublime.windows(), window_id)
+            if window:
+                view = find_by_id(window.views(), view_id)
+                if not view:
+                    log("Navigate", "Error: could not find view", view_id, "in", window)
+                    return
+            else:
+                log("Navigate", "Error: could not find window", window_id)
+                return
+
+        if link.startswith('replace:'):
+            path = link.replace('replace:', '')
+            try:
+                problem_id, replacement_id = map(int, path.split('/'))
+            except ValueError:
+                log("Navigate", "Error: invalid path", path)
+                return
+
+            view.hide_popup()
+            problem = find_by_id(get_problems(view), str(problem_id))
+            if problem:
+                view.run_command("handle_replacement", {
+                    "problem": problem,
+                    "replacement_id": replacement_id,
+                })
+            else:
+                log("Navigate", "Error: could not find problem", problem_id, "in", view)
+        if link.startswith("showall:"):
+            problem_id = link.replace('showall:', '')
+            problem = find_by_id(get_problems(view), problem_id)
+            view.update_popup(generate_html_popup(view, problem, show_all_replacements=True))
+
+
+
+class HandleReplacementCommand(sublime_plugin.TextCommand):
+    def run(self, edit, problem, replacement_id):
+        if None in (replacement_id, problem):
+            log("HandleReplacement", "Error: one of the required arguments is not set")
+            return
+        if replacement_id >= len(problem['replacements']):
+            log("HandleReplacement", "Error: replacement_id not found in problem['replacements']")
+            return
+
+        log("HandleReplacement", "replacing", replacement_id, problem)
+        self.view.replace(edit, get_region_for_problem(problem), problem['replacements'][replacement_id])

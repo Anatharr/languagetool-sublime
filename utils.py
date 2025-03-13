@@ -65,6 +65,12 @@ def parse_match(match):
 
 # Miscellaneous functions
 
+def find_by_id(haystack, needle):
+    try:
+        return next(filter(lambda x:needle == (x['id'] if type(x) is dict else x.id()), haystack))
+    except StopIteration:
+        return None
+
 def get_caller():
     print(''.join(traceback.format_stack()))
 

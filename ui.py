@@ -25,6 +25,7 @@ def is_problem_solved(view, problem):
     2. its contents have been changed.
     """
     pb_regions = view.get_regions(problem['id'])
+    log("IsProblemSolved", pb_regions)
     if len(pb_regions) == 0:
         return False
     region = pb_regions[0]
@@ -34,7 +35,7 @@ def is_problem_solved(view, problem):
 def show_problem(view, p):
     """Show problem description and suggestions."""
 
-    log("show_problem", p)
+    log("ShowProblem", p)
 
     msg = p['message']
     if p['replacements']:
@@ -160,12 +161,51 @@ def clear_region(view, region_key):
 def recompute_highlights(view):
     problems = get_problems(view)
     for problem in list(problems):
+        log("RecomputeHighlights", "handling problem", problem['id'])
         region = get_region_for_problem(problem)
         if is_problem_solved(view, problem):
-            log("RECOMPUTE", "removing solved problem", problem['id'])
+            log("RecomputeHighlights", "removing solved problem", problem['id'])
             view.erase_regions(problem['id'])
             problems.remove(problem)
         else:
             view.add_regions(problem['id'], [region], "text", "",
-                                sublime.DRAW_SQUIGGLY_UNDERLINE | sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE)
+                                sublime.DRAW_SQUIGGLY_UNDERLINE | sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.NO_UNDO)
     save_problems(view, problems)
+
+def generate_html_popup(view, problem, show_all_replacements=False):
+    window_id = view.window().id()
+    view_id = view.id()
+
+    if show_all_replacements:
+        index_max = len(problem['replacements'])
+    else:
+        index_max = 5
+
+    replacements = '<br/>'.join(f"- <a href='view:{window_id}/{view_id},replace:{problem['id']}/{i}'>Use '{r}'</a>" for i,r in enumerate(problem['replacements'][:index_max]))
+
+    if len(problem['replacements']) > index_max:
+        replacements += f"<br/>- <a href='view:{window_id}/{view_id},showall:{problem['id']}'>Show all replacements</a>"
+
+    log("UI", "replacements", replacements)
+    return f"""
+        <body id=show-scope>
+            <style>
+                h1 {{
+                    font-size: 1.1rem;
+                    font-weight: 500;
+                    margin: 0 0 0.5em 0;
+                    font-family: system;
+                }}
+                p {{
+                    margin-top: 0;
+                }}
+                a {{
+                    font-weight: normal;
+                    font-size: 1.0rem;
+                }}
+            </style>
+            <p>{problem['message']}</p>
+            <h1>Replacements</h1>
+            <p>{replacements}</p>
+        </body>
+    """
