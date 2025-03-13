@@ -14,7 +14,6 @@ def save_problems(view, problems):
         del _PROBLEMS[view_id]
     else:
         _PROBLEMS[view_id] = problems
-    log("SAVE_PROBLEMS", "saved", len(problems), "problems")
 
 def get_problems(view):
     return _PROBLEMS[view.id()] if view.id() in _PROBLEMS else []
@@ -35,9 +34,9 @@ def region_contains(region, problem):
     reg = get_region_for_problem(problem)
     return region.contains(reg)
 
-def is_ignored(view, problem):
-    """Return True if any problem scope is ignored."""
-    scope_string = view.scope_name(problem['offset'])
+def is_ignored(view, point):
+    """Return True if any scope at given point is ignored."""
+    scope_string = view.scope_name(point)
     scopes = scope_string.split()
     ignored_scopes = get_settings().get('ignored-scopes')
     return cross_match(scopes, ignored_scopes, fnmatch.fnmatch)

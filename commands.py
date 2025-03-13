@@ -177,53 +177,53 @@ class LanguageToolCommand(sublime_plugin.TextCommand):
         save_problems(self.view, problems)
         recompute_highlights(self.view)
 
-class DeactivateRuleCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        ignored = load_ignored_rules()
-        problems = get_problems(self.view)
-        sel = self.view.sel()[0]
-        selected = [
-            p for p in problems
-            if sel.contains(self.view.get_regions(p['regionKey'])[0])
-        ]
-        if not selected:
-            set_status_bar('select a problem to deactivate its rule')
-        elif len(selected) == 1:
-            rule = {
-                "id": selected[0]['rule'],
-                "description": selected[0]['message']
-            }
-            ignored.append(rule)
-            ignoredProblems = [p for p in problems if p['rule'] == rule['id']]
-            for p in ignoredProblems:
-                ignore_problem(p, self.view, edit)
-            problems = [p for p in problems if p['rule'] != rule['id']]
-            self.view.run_command("goto_next_language_problem")
-            save_ignored_rules(ignored)
-            set_status_bar('deactivated rule %s' % rule)
-        else:
-            set_status_bar('there are multiple selected problems;'
-                           ' select only one to deactivate')
+# class DeactivateRuleCommand(sublime_plugin.TextCommand):
+#     def run(self, edit):
+#         ignored = load_ignored_rules()
+#         problems = get_problems(self.view)
+#         sel = self.view.sel()[0]
+#         selected = [
+#             p for p in problems
+#             if sel.contains(self.view.get_regions(p['regionKey'])[0])
+#         ]
+#         if not selected:
+#             set_status_bar('select a problem to deactivate its rule')
+#         elif len(selected) == 1:
+#             rule = {
+#                 "id": selected[0]['rule'],
+#                 "description": selected[0]['message']
+#             }
+#             ignored.append(rule)
+#             ignoredProblems = [p for p in problems if p['rule'] == rule['id']]
+#             for p in ignoredProblems:
+#                 ignore_problem(p, self.view, edit)
+#             problems = [p for p in problems if p['rule'] != rule['id']]
+#             self.view.run_command("goto_next_language_problem")
+#             save_ignored_rules(ignored)
+#             set_status_bar('deactivated rule %s' % rule)
+#         else:
+#             set_status_bar('there are multiple selected problems;'
+#                            ' select only one to deactivate')
 
 
-class ActivateRuleCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        ignored = load_ignored_rules()
-        if ignored:
-            activate_callback_wrapper = lambda i: self.activate_callback(i)
-            ruleList = [[rule['id'], rule['description']] for rule in ignored]
-            self.view.window().show_quick_panel(ruleList,
-                                                activate_callback_wrapper)
-        else:
-            set_status_bar('there are no ignored rules')
+# class ActivateRuleCommand(sublime_plugin.TextCommand):
+#     def run(self, edit):
+#         ignored = load_ignored_rules()
+#         if ignored:
+#             activate_callback_wrapper = lambda i: self.activate_callback(i)
+#             ruleList = [[rule['id'], rule['description']] for rule in ignored]
+#             self.view.window().show_quick_panel(ruleList,
+#                                                 activate_callback_wrapper)
+#         else:
+#             set_status_bar('there are no ignored rules')
 
-    def activate_callback(self, i):
-        ignored = load_ignored_rules()
-        if i != -1:
-            activate_rule = ignored[i]
-            ignored.remove(activate_rule)
-            save_ignored_rules(ignored)
-            set_status_bar('activated rule %s' % activate_rule['id'])
+#     def activate_callback(self, i):
+#         ignored = load_ignored_rules()
+#         if i != -1:
+#             activate_rule = ignored[i]
+#             ignored.remove(activate_rule)
+#             save_ignored_rules(ignored)
+#             set_status_bar('activated rule %s' % activate_rule['id'])
 
 
 class LanguageToolListener(sublime_plugin.EventListener):

@@ -138,19 +138,24 @@ def clear_region(view, region_key):
     view.add_regions(region_key, [dummyRg], hscope, "", sublime.DRAW_OUTLINED)
 
 
-_HIGHLIGHTED_REGIONS = {}
-def add_highlight_region(view, region_key, problem):
-    global _HIGHLIGHTED_REGIONS
-    problem['regionKey'] = region_key
-    view_id = view.id()
+# _HIGHLIGHTED_REGIONS = {}
+# def add_highlight_region(view, region_key, problem):
+#     global _HIGHLIGHTED_REGIONS
+#     problem['regionKey'] = region_key
+#     view_id = view.id()
 
-    if view_id not in _HIGHLIGHTED_REGIONS:
-        _HIGHLIGHTED_REGIONS[view_id] = []
+#     if view_id not in _HIGHLIGHTED_REGIONS:
+#         _HIGHLIGHTED_REGIONS[view_id] = []
 
-    _HIGHLIGHTED_REGIONS[view_id][region_key] = region
+#     _HIGHLIGHTED_REGIONS[view_id][region_key] = region
 
-    self.view.add_regions(region_key, [], "text", "",
-                          sublime.DRAW_SQUIGGLY_UNDERLINE | sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE)
+#     view.add_regions(region_key, [], "text", "",
+#                           sublime.DRAW_SQUIGGLY_UNDERLINE | sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE)
+
+# def remove_highlight_region(view, region_key):
+#     view.erase_regions(region_key)
+#     if view.id() in _HIGHLIGHTED_REGIONS and re[view_id]:
+#         pass
 
 def recompute_highlights(view):
     problems = get_problems(view)
